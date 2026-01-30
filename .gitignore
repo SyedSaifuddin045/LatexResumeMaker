@@ -2,29 +2,89 @@
 __pycache__/
 *.py[cod]
 *$py.class
-venv/
-.env
-
-# IDE
-.vscode/
-.idea/
-
-# Project Specific
-settings.json
-work_output/
-*.log
-*.pdf
-*.aux
-*.log
-*.out
-*.toc
-*.synctex.gz
-
-# PyInstaller / Build
+*.so
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
 *.spec
 
-# OS
-Thumbs.db
-.DS_Store
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Debug files
+debug.log
+debug.aux
+debug.pdf
+debug.tex
+*.log
+
+# VS Code
+.vscode/
+
+# Project specific
+work/
+work_output/
+*.pdf
+!sample_job_description.txt
+resume.tex
+resume.pdf
+api_test.bat
+debug_compilation.py
+pdflatex_stderr.txt
+pdflatex_stdout.txt
