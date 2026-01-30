@@ -5,6 +5,9 @@ import platform
 import jinja2
 import base64
 import tempfile
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Try to import resource_path from parent utils
 try:
@@ -22,6 +25,7 @@ except ImportError:
 class LatexEngine:
     def __init__(self, template_dir="templates"):
         self.template_dir = resource_path(template_dir)
+        self.current_process = None
         # Configure Jinja2 for LaTeX
         self.env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(self.template_dir),
@@ -36,6 +40,15 @@ class LatexEngine:
             trim_blocks=True,
             autoescape=False,
         )
+
+    def kill_compilation(self):
+        if self.current_process:
+            try:
+                self.current_process.terminate()
+            except:
+                pass
+            return True
+        return False
 
     def render_template(self, template_name, context):
         """Renders the Jinja2 template with context data."""
@@ -52,7 +65,6 @@ class LatexEngine:
             return template.render(**context)
         except Exception as e:
             raise RuntimeError(f"Custom template rendering failed: {e}")
-
 
     def _ensure_pdflatex_path(self):
         """Attempts to add common LaTeX paths to environment if pdflatex is missing."""
@@ -80,7 +92,7 @@ class LatexEngine:
                 # check for exe inside
                 exe_path = os.path.join(path, "pdflatex.exe")
                 if os.path.exists(exe_path):
-                    print(f"Found pdflatex at {path}, adding to PATH...")
+                    logger.info(f"Found pdflatex at {path}, adding to PATH...")
                     os.environ["PATH"] += os.pathsep + path
                     return True
                 
@@ -88,6 +100,7 @@ class LatexEngine:
 
     def compile_pdf(self, tex_content, output_dir=None):
         """Compiles TeX content to PDF using pdflatex. Returns path to PDF."""
+        logger.info("Starting PDF Compilation...")
 
         # Ensure pdflatex exists
         if not self._ensure_pdflatex_path():
@@ -102,12 +115,12 @@ class LatexEngine:
         if not os.path.exists(base_work_dir):
             os.makedirs(base_work_dir)
             
-        # Create a unique subfolder for this run (or just use one if single user)
-        # Using one folder makes debugging easier for the user
         work_dir = os.path.join(base_work_dir, "build")
         if os.path.exists(work_dir):
-            shutil.rmtree(work_dir)
-        os.makedirs(work_dir)
+            try:
+                shutil.rmtree(work_dir)
+            except: pass # ignore if locked
+        os.makedirs(work_dir, exist_ok=True)
 
         tex_path = os.path.join(work_dir, "resume.tex")
         with open(tex_path, "w", encoding="utf-8") as f:
@@ -127,18 +140,36 @@ class LatexEngine:
         # Enforce Path for newly installed MiKTeX
         env = os.environ.copy()
         
+        logger.debug(f"Executing: {' '.join(cmd)}")
+        
         def run_compilation():
             # Run twice for references
             for _ in range(2):
-                 subprocess.run(
+                 self.current_process = subprocess.Popen(
                     cmd,
                     cwd=work_dir,
                     env=env,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    text=True,
-                    check=True
+                    text=True
                 )
+                 try:
+                     stdout, stderr = self.current_process.communicate(timeout=30)
+                 except subprocess.TimeoutExpired:
+                     logger.error("Compilation timed out!")
+                     self.current_process.terminate()
+                     raise RuntimeError("Compilation timed out (30s)")
+                 except Exception as e:
+                     logger.error(f"Compilation Process Error: {e}")
+                     raise e
+                 finally:
+                     # Check return code
+                     rc = self.current_process.returncode if self.current_process else -1
+                     self.current_process = None
+                     if rc != 0:
+                         logger.error(f"pdflatex returned code {rc}")
+                         raise subprocess.CalledProcessError(rc, cmd, output=stdout, stderr=stderr)
+
 
         try:
             try:
@@ -147,7 +178,7 @@ class LatexEngine:
                 # MiKTeX First-Run/DB Issue? Try to initialize.
                 # 'initexmf' is the MiKTeX configuration utility
                 if shutil.which("initexmf"):
-                    print("Compilation failed. Attempting MiKTeX DB refresh...")
+                    logger.warning("Compilation failed. Attempting MiKTeX DB refresh...")
                     subprocess.run(["initexmf", "--update-fndb"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     subprocess.run(["initexmf", "--mkmaps"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     # Retry once

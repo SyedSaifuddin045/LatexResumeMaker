@@ -130,10 +130,13 @@ function startTask(type) {
     // Toggle buttons
     if (type === 'gen') {
         document.getElementById('btn-generate').style.display = 'none';
-        document.getElementById('btn-stop-gen').style.display = 'inline-block'; // block or inline-block
-    } else {
+        document.getElementById('btn-stop-gen').style.display = 'inline-block';
+    } else if (type === 'fix') {
         document.getElementById('btn-fix').style.display = 'none';
         document.getElementById('btn-stop-fix').style.display = 'inline-block';
+    } else if (type === 'compile') {
+        document.getElementById('btn-compile').style.display = 'none';
+        document.getElementById('btn-stop-compile').style.display = 'inline-block';
     }
 
     currentTaskToken = Date.now();
@@ -167,6 +170,10 @@ function resetUI(type) {
     if (type === 'fix' || type === 'All') {
         document.getElementById('btn-fix').style.display = 'inline-block';
         document.getElementById('btn-stop-fix').style.display = 'none';
+    }
+    if (type === 'compile' || type === 'All') {
+        document.getElementById('btn-compile').style.display = 'block';
+        document.getElementById('btn-stop-compile').style.display = 'none';
     }
 }
 
@@ -237,13 +244,16 @@ async function compilePdf() {
     // Compile is fast/local, so no stop button needed usually, but we could add if needed.
     // User requested "api calls", compile runs 'pdflatex' locally.
     // We'll keep standard loader.
-    document.getElementById('loader').style.display = 'block';
     document.getElementById('status-text').textContent = 'Compiling PDF...';
     document.getElementById('error-msg').textContent = '';
     toggleErrorConsole(false);
 
+    const myToken = startTask('compile');
+
     try {
         const result = await pywebview.api.compile_pdf(texContent);
+
+        if (currentTaskToken !== myToken) return;
 
         if (result.success) {
             const pdfData = "data:application/pdf;base64," + result.pdf_base64;
@@ -272,9 +282,10 @@ async function compilePdf() {
             }
         }
     } catch (e) {
-        document.getElementById('error-msg').textContent = "System Exception: " + e;
+        if (currentTaskToken === myToken)
+            document.getElementById('error-msg').textContent = "System Exception: " + e;
     } finally {
-        document.getElementById('loader').style.display = 'none';
+        if (currentTaskToken === myToken) resetUI('compile');
     }
 }
 
@@ -324,6 +335,21 @@ async function fixWithAI(event) {
 
 function openPdf() {
     pywebview.api.open_current_pdf();
+}
+
+async function savePdf() {
+    try {
+        const result = await pywebview.api.save_pdf();
+        if (result.success) {
+            alert("Saved to: " + result.path);
+        } else {
+            if (result.error !== 'Cancelled') {
+                alert("Save Failed: " + result.error);
+            }
+        }
+    } catch (e) {
+        alert("Error saving: " + e);
+    }
 }
 
 // Init

@@ -1,8 +1,12 @@
 import webview
 import os
+import logging
 from api import Bridge
 import sys
 from utils import resource_path
+
+# Configure Logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
     api = Bridge()
@@ -16,7 +20,7 @@ def main():
         return
 
     # Create Window
-    webview.create_window(
+    window = webview.create_window(
         'ATS Resume Genius', 
         url=index_path,
         js_api=api,
@@ -25,6 +29,8 @@ def main():
         resizable=True,
         background_color='#0f172a' # Matches CSS
     )
+    
+    api.set_window(window)
     
     # Start loop
     webview.start(debug=False)
