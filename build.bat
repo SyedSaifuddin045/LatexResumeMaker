@@ -17,10 +17,11 @@ echo Running PyInstaller...
 :: --windowed: no console
 :: --add-data: assets
 :: --hidden-import: ensure clr (pythonnet) is found
-pyinstaller --noconfirm --onedir --windowed ^
+pyinstaller --noconfirm --onedir --windowed --icon "icon.ico" ^
     --hidden-import "clr" ^
     --add-data "gui;gui" ^
     --add-data "templates;templates" ^
+    --add-data "icon.ico;." ^
     --name "ATS_Resume_Genius" ^
     main.py
 

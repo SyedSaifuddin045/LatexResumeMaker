@@ -20,15 +20,17 @@ def main():
         return
 
     # Create Window
-    window = webview.create_window(
-        'ATS Resume Genius', 
-        url=index_path,
-        js_api=api,
-        width=1200,
-        height=800,
-        resizable=True,
-        background_color='#0f172a' # Matches CSS
-    )
+    kwargs = {
+        'title': 'ATS Resume Genius',
+        'url': index_path,
+        'js_api': api,
+        'width': 1200,
+        'height': 800,
+        'resizable': True,
+        'background_color': '#0f172a'
+    }
+    
+    window = webview.create_window(**kwargs)
     
     api.set_window(window)
     
