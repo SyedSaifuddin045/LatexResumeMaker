@@ -1,0 +1,6 @@
+pywebview
+requests
+jinja2
+google-genai
+# optional for pdf conversion
+# pdf2image 

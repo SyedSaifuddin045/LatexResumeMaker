@@ -1,0 +1,18 @@
+Senior Software Engineer - Python/AI
+
+About the Role:
+We are looking for a Senior Software Engineer to join our AI Platform team. You will build scalable systems that power our next-gen generative AI applications.
+
+Responsibilities:
+- Design and implement high-performance APIs using FastAPI and Python.
+- Integrate Large Language Models (LLMs) into production workflows.
+- optimize database queries (PostgreSQL) and caching strategies (Redis).
+- Collaborate with data scientists to deploy models.
+- Mentor junior engineers and conduct code reviews.
+
+Requirements:
+- 5+ years of experience with Python.
+- Strong knowledge of algorithms and data structures.
+- Experience with Cloud platforms (AWS or GCP).
+- Familiarity with Docker and Kubernetes.
+- Experience with AI/ML frameworks (PyTorch, TensorFlow) is a plus.

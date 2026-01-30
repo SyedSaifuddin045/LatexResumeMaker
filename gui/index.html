@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Resume Genius</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Additional styles for Error Console */
+        .error-console {
+            background-color: #2c0b0e;
+            border-top: 2px solid var(--error);
+            color: #ffb3b3;
+            font-family: monospace;
+            font-size: 0.85rem;
+            display: none;
+            /* Hidden by default */
+            flex-direction: column;
+            max-height: 200px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .error-console.expanded {
+            max-height: 50%;
+        }
+
+        .error-header {
+            padding: 5px 10px;
+            background-color: rgba(255, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .error-body {
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+            white-space: pre-wrap;
+            user-select: text;
+        }
+
+        /* Stop Button Styles */
+        .btn-stop {
+            background-color: #ef4444;
+            /* Red-500 */
+            color: white;
+            border: none;
+            display: none;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .btn-stop:hover {
+            background-color: #dc2626;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebar">
+        <div class="logo">
+            <span>✨ ATS Genius</span>
+        </div>
+        <div class="nav-item active" onclick="navigate('generate')">Generate Resume</div>
+        <div class="nav-item" onclick="navigate('settings')">Settings</div>
+    </div>
+
+    <div id="main">
+        <!-- Generate View -->
+        <div id="view-generate" class="view active">
+            <h1>Create Resume</h1>
+            <h2>Paste your job description and let AI optimize your resume.</h2>
+
+            <div class="split-container">
+                <div class="pane">
+                    <div class="pane-header">Input Data</div>
+                    <div class="pane-content">
+                        <div class="form-group">
+                            <label>Template</label>
+                            <select id="template-select" onchange="toggleTemplateEditor()">
+                                <option value="modern.tex">Modern Professional</option>
+                                <option value="custom">Custom (Paste LaTeX)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="template-editor-group" style="display: none;">
+                            <label>Custom LaTeX Template (Use \VAR{name}, \VAR{summary} etc.)</label>
+                            <textarea id="custom-template"
+                                style="height: 200px; font-family: monospace; font-size: 0.9em;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Job Description</label>
+                            <textarea id="job-desc" placeholder="Paste the job description here..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Personal Data (JSON Override)</label>
+                            <textarea id="resume-data"
+                                placeholder='{"name": "John Doe", "skills": ["Python"]}... (Leave empty to use AI defaults)'
+                                style="height: 100px; font-family: monospace;"></textarea>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+
+                        <div class="form-group">
+                            <label>Actions</label>
+                            <button id="btn-generate" onclick="generateLatexSource()"
+                                style="width: 100%; margin-bottom: 10px;">Generate LaTeX Source</button>
+                            <button id="btn-stop-gen" class="btn-stop" onclick="stopCurrentTask()">⏹ Stop
+                                Generation</button>
+                            <small class="text-muted" style="display:block; text-align:center;">Generated source will
+                                appear in the right pane.</small>
+                        </div>
+
+                        <div class="loader" id="loader" style="margin: 10px auto;"></div>
+                        <div id="progress-msg"
+                            style="color: var(--text-muted); margin-top: 5px; font-size: 0.9em; text-align:center;">
+                        </div>
+                        <div id="error-msg" style="color: var(--error); margin-top: 10px; font-size: 0.9em;"></div>
+                    </div>
+                </div>
+
+                <!-- Right Pane -->
+                <div class="pane" id="right-pane">
+                    <div class="pane-header"
+                        style="display: flex; align-items: center; justify-content: space-between;">
+                        <div class="tabs" style="display: flex; gap: 15px;">
+                            <span id="tab-source" class="tab active"
+                                style="cursor: pointer; font-weight: bold; border-bottom: 2px solid var(--accent); color: white;"
+                                onclick="switchRightTab('source')">LaTeX Source</span>
+                            <span id="tab-pdf" class="tab" style="cursor: pointer; color: var(--text-muted);"
+                                onclick="switchRightTab('pdf')">PDF Preview</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="secondary" id="btn-compile"
+                                style="padding: 4px 12px; font-size: 0.8rem; background-color: var(--success); color: white; border: none;"
+                                onclick="compilePdf()">▶ Compile</button>
+                            <button class="secondary" style="padding: 4px 8px; font-size: 0.8rem;"
+                                onclick="openPdf()">Open External</button>
+                        </div>
+                    </div>
+
+                    <!-- Source View -->
+                    <div id="view-source" class="pane-mode"
+                        style="height: 100%; display: flex; flex-direction: column;">
+                        <textarea id="generated-latex"
+                            style="flex: 1; width: 100%; border: none; padding: 10px; background-color: #1e1e1e; color: #d4d4d4; font-family: monospace; resize: none;"
+                            spellcheck="false" placeholder="LaTeX source will appear here..."></textarea>
+
+                        <!-- NEW Error Console -->
+                        <div id="error-console" class="error-console">
+                            <div class="error-header" onclick="toggleErrorConsole()">
+                                <span>⚠️ Compilation Errors</span>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <button id="btn-fix" onclick="fixWithAI(event)"
+                                        style="padding: 2px 8px; font-size: 0.75rem; background-color: #eab308; color: black; border: none; font-weight: bold;">✨
+                                        Fix with AI</button>
+                                    <button id="btn-stop-fix" onclick="stopCurrentTask(event)"
+                                        style="padding: 2px 8px; font-size: 0.75rem; background-color: #ef4444; color: white; border: none; font-weight: bold; display: none;">⏹
+                                        Stop Fixing</button>
+                                    <span id="err-toggle-icon">▼</span>
+                                </div>
+                            </div>
+                            <div id="error-body" class="error-body"></div>
+                        </div>
+                    </div>
+
+                    <!-- PDF View -->
+                    <div id="view-pdf" class="pane-mode" style="height: 100%; display: none;">
+                        <div id="pdf-missing"
+                            style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 10px;">📄</div>
+                            <p>No PDF generated yet.</p>
+                            <p style="font-size: 0.8em;">Generate source and click "Compile".</p>
+                        </div>
+                        <iframe id="pdf-preview" src=""
+                            style="display: none; width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="view-settings" class="view">
+            <h1>Settings</h1>
+            <h2>Configure AI Provider and Paths</h2>
+
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label>AI Provider</label>
+                    <select id="ai-provider" onchange="toggleAiSettings()">
+                        <option value="ollama">Local (Ollama)</option>
+                        <option value="openai" selected>OpenAI (Cloud)</option>
+                        <option value="google">Google Gemini</option>
+                    </select>
+                </div>
+                <div class="form-group" id="group-api-key">
+                    <label>API Key</label>
+                    <input type="password" id="api-key" placeholder="sk-...">
+                </div>
+                <div class="form-group" id="group-model">
+                    <label>Model Name</label>
+                    <input type="text" id="model-name" value="gpt-4o-mini">
+                    <small style="color: var(--text-muted)">E.g., gpt-4o, llama3:latest</small>
+                </div>
+            </div>
+
+            <!-- Advanced: Resume Generation Prompt -->
+            <div style="margin-top: 30px;">
+                <h3 style="cursor: pointer; display: flex; align-items: center; font-size: 1rem; color: var(--text-muted);"
+                    onclick="toggleAdvanced('resume')">
+                    <span id="adv-arrow-resume">▶</span> &nbsp; Advanced: Resume Generation Prompt
+                </h3>
+                <div id="advanced-settings-resume" style="display: none; margin-top: 10px;">
+                    <label style="margin-bottom: 5px; display: block;">Instructions for Resume Generation:</label>
+                    <textarea id="system-prompt"
+                        style="height: 150px; font-family: monospace; font-size: 0.85rem; color: white;"
+                        placeholder="Enter system prompt..."></textarea>
+                    <button class="secondary" style="margin-top: 5px; padding: 5px 10px;"
+                        onclick="resetDefaultPrompt('resume')">Reset to Default</button>
+                </div>
+            </div>
+
+            <!-- Advanced: Fixing Prompt -->
+            <div style="margin-top: 15px;">
+                <h3 style="cursor: pointer; display: flex; align-items: center; font-size: 1rem; color: var(--text-muted);"
+                    onclick="toggleAdvanced('fix')">
+                    <span id="adv-arrow-fix">▶</span> &nbsp; Advanced: Fixing Prompt
+                </h3>
+                <div id="advanced-settings-fix" style="display: none; margin-top: 10px;">
+                    <label style="margin-bottom: 5px; display: block;">Instructions for AI Autofix:</label>
+                    <textarea id="system-prompt-fix"
+                        style="height: 150px; font-family: monospace; font-size: 0.85rem; color: white;"
+                        placeholder="Enter fixing prompt..."></textarea>
+                    <button class="secondary" style="margin-top: 5px; padding: 5px 10px;"
+                        onclick="resetDefaultPrompt('fix')">Reset to Default</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button onclick="saveSettings()">Save Configuration</button>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <span id="status-text">Ready</span>
+            <span id="version">v1.2.1</span>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

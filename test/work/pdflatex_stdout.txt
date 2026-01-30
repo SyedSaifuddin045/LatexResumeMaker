@@ -1,0 +1,24 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex.fmt)
+ restricted \write18 enabled.
+entering extended mode
+(C:/Users/SyedSaifuddin/Programs/Python/LatexResumeMaker/test/resume.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-12-29>
+
+(C:\Users\SyedSaifuddin\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cl
+s
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+
+(C:\Users\SyedSaifuddin\AppData\Local\Programs\MiKTeX\tex/latex/base\size10.clo
+))
+(C:\Users\SyedSaifuddin\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3bac
+kend-pdftex.def)
+(C:\Users\SyedSaifuddin\Programs\Python\LatexResumeMaker\test\work\resume.aux)
+[1{C:/Users/SyedSaifuddin/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
+(C:\Users\SyedSaifuddin\Programs\Python\LatexResumeMaker\test\work\resume.aux) 
+)<C:/Users/SyedSaifuddin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfo
+nts/cm/cmr10.pfb>
+Output written on C:\Users\SyedSaifuddin\Programs\Python\LatexResumeMaker\test\
+work\resume.pdf (1 page, 14124 bytes).
+Transcript written on C:\Users\SyedSaifuddin\Programs\Python\LatexResumeMaker\t
+est\work\resume.log.

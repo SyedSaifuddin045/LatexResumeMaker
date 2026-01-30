@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Project Specific
+settings.json
+work_output/
+*.log
+*.pdf
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+
+# PyInstaller / Build
+build/
+dist/
+*.spec
+
+# OS
+Thumbs.db
+.DS_Store
