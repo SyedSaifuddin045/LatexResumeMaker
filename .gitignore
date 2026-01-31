@@ -88,3 +88,8 @@ api_test.bat
 debug_compilation.py
 pdflatex_stderr.txt
 pdflatex_stdout.txt
+
+# Sensitive files - API keys
+settings.json
+secrets.json
+.env
